@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление задачами проекта</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a86e8;
+            --primary-dark: #3a6dc8;
+            --success-color: #2e7d32;
+            --success-light: #4caf50;
+            --error-color: #d32f2f;
+            --warning-color: #f57c00;
+            --text-light: #333;
+            --text-dark: #f5f5f5;
+            --bg-dark: #f8f9fa;
+            --card-dark: #ffffff;
+            --border-dark: #ddd;
+            --header-dark: #f5f5f5;
+            --hover-dark: #e8e8e8;
+            --transition: all 0.3s ease;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --card-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body.dark-theme {
+            --text-light: #f5f5f5;
+            --text-dark: #333;
+            --bg-dark: #121212;
+            --card-dark: #1e1e1e;
+            --border-dark: #333;
+            --header-dark: #1a1a1a;
+            --hover-dark: #2a2a2a;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+            --card-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            padding: 12px;
+            line-height: 1.5;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        h1 {
+            font-size: 20px;
+            color: var(--text-light);
+            background: linear-gradient(90deg, var(--primary-color), #6ab1ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        .theme-switch {
+            background: var(--card-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            font-size: 13px;
+        }
+        
+        .theme-switch:hover {
+            background: var(--hover-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .add-task-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .add-task-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(74, 134, 232, 0.4);
+        }
+        
+        .employee-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .employee-btn {
+            background: var(--card-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-dark);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+        }
+        
+        .employee-btn:hover {
+            background: var(--hover-dark);
+            transform: translateY(-2px);
+        }
+        
+        .employee-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-color: var(--primary-color);
+        }
+        
+        .board-container {
+            overflow-x: auto;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-dark);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-dark);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid var(--border-dark);
+        }
+        
+        th {
+            background-color: var(--header-dark);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        
+        th:hover {
+            background-color: var(--hover-dark);
+        }
+        
+        .product-row th {
+            background-color: var(--header-dark);
+            font-weight: 500;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .cell {
+            min-width: 180px;
+            min-height: 100px;
+            vertical-align: top;
+            width: 14.28%;
+            transition: var(--transition);
+        }
+        
+        .effect-cell {
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .effect-row {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .effect-label {
+            font-size: 12px;
+            color: #777;
+        }
+        
+        .effect-value {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .effect-value.green {
+            color: #2e7d32;
+        }
+        
+        .effect-value.blue {
+            color: #1976d2;
+        }
+        
+        .cell.highlight {
+            background-color: rgba(58, 109, 200, 0.2) !important;
+        }
+        
+        .cards-container {
+            min-height: 100px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .card {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: move;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            position: relative;
+            animation: cardAppear 0.4s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            border-color: var(--primary-color);
+        }
+        
+        @keyframes cardAppear {
+            from { 
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card h3 {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .card p {
+            font-size: 13px;
+            color: #b0b0b0;
+            margin: 3px 0;
+            line-height: 1.4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .card .employee {
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .card .compact-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #9e9e9e;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border-dark);
+        }
+        
+        .card.effect {
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.2), rgba(76, 175, 80, 0.1));
+            border-color: var(--success-color);
+        }
+        
+        .drag-over {
+            border: 2px dashed var(--primary-color);
+            background-color: rgba(58, 109, 200, 0.1);
+        }
+        
+        .hidden-row {
+            display: none;
+        }
+        
+        .hidden-card {
+            display: none;
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            padding: 12px;
+            font-size: 12px;
+            color: #9e9e9e;
+            border-top: 1px solid var(--border-dark);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-radius: 6px;
+            box-shadow: var(--shadow);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 35px;
+            background: rgba(211, 47, 47, 0.2);
+            color: var(--error-color);
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            font-size: 12px;
+        }
+
+        .edit-btn {
+            position: absolute;
+            top: 8px;
+            right: 62px;
+            background: rgba(58, 109, 200, 0.2);
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            font-size: 12px;
+        }
+        
+        .card:hover .delete-btn,
+        .card:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        .delete-btn:hover {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .editable-header {
+            cursor: text;
+        }
+        
+        .header-edit {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            border-radius: 4px;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px;
+            width: 100%;
+        }
+        
+        .filters-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        
+        .filters-header h3 {
+            font-size: 14px;
+            color: #b0b0b0;
+            margin: 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--card-dark);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-dark);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .close-modal:hover {
+            color: var(--primary-color);
+            transform: rotate(90deg);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .modal .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal .form-group label {
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #b0b0b0;
+        }
+        
+        .modal .form-group input, 
+        .modal .form-group select {
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+        
+        .modal .form-group input:focus, 
+        .modal .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 134, 232, 0.3);
+        }
+        
+        .modal .form-group.required label::after {
+            content: " *";
+            color: var(--error-color);
+        }
+        
+        .modal .error {
+            border-color: var(--error-color) !important;
+        }
+        
+        .modal .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .modal .form-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal button {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+        }
+        
+        .modal button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(74, 134, 232, 0.3);
+        }
+        
+        .efs-card .employee {
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .efs-card .amount-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-dark);
+            border-radius: 4px;
+            padding: 6px 10px;
+            color: var(--text-light);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .efs-card .amount-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 134, 232, 0.3);
+        }
+        
+        .efs-card .amount-input:hover {
+            border-color: #aaa;
+        }
+        
+        .formatted-number {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .color-picker {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 10;
+        }
+        
+        .card:hover .color-picker {
+            opacity: 1;
+        }
+        
+        .color-option {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: var(--transition);
+        }
+        
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+        
+        .color-red { background-color: #ff6b6b; }
+        .color-green { background-color: #51cf66; }
+        .color-blue { background-color: #4dabf7; }
+        .color-default { background-color: #adb5bd; }
+        
+        .card.red { border-left: 4px solid #ff6b6b; }
+        .card.green { border-left: 4px solid #51cf66; }
+        .card.blue { border-left: 4px solid #4dabf7; }
+        
+        .import-export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .import-export-btn {
+            background: var(--card-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-dark);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+        }
+        
+        .import-export-btn:hover {
+            background: var(--hover-dark);
+            transform: translateY(-2px);
+        }
+        
+        .card-content {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .card-content:hover {
+            opacity: 0.9;
+        }
+        
+        /* Стили для чекбоксов в заголовках */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sum-checkbox {
+            cursor: pointer;
+        }
+        
+        @media (max-width: 1200px) {
+            .employee-btn {
+                padding: 7px 12px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .employee-filters {
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 8px;
+            }
+            
+            .employee-btn {
+                flex-shrink: 0;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .modal .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .import-export-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .effect-cell {
+                padding: 5px;
+            }
+            
+            .effect-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1><i class="fas fa-tasks"></i> Управление задачами проекта</h1>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="add-task-btn" id="openModalBtn">
+                    <i class="fas fa-plus"></i> Добавить задачу
+                </button>
+                <div class="import-export-buttons">
+                    <button class="import-export-btn" id="exportBtn">
+                        <i class="fas fa-file-export"></i> Экспорт
+                    </button>
+                    <button class="import-export-btn" id="importBtn">
+                        <i class="fas fa-file-import"></i> Импорт
+                    </button>
+                </div>
+                <div class="theme-switch" id="themeSwitch">
+                    <i class="fas fa-moon"></i> Темная тема
+                </div>
+            </div>
+        </header>
+        
+        <div class="filters-header">
+            <h3><i class="fas fa-filter"></i> Фильтр по сотрудникам:</h3>
+            <button id="resetFilter" class="employee-btn"><i class="fas fa-users"></i> Все сотрудники</button>
+        </div>
+        
+        <div class="employee-filters" id="employeeFilters">
+            <!-- Кнопки сотрудников будут добавлены через JS -->
+        </div>
+        
+        <div class="board-container">
+            <table id="taskBoard">
+                <thead>
+                    <tr>
+                        <th style="width: 14.28%">Показатель</th>
+                        <th class="editable-header" style="width: 14.28%" data-column="backlog">
+                            Бэклог
+                        </th>
+                        <th class="editable-header" style="width: 14.28%" data-column="june">
+                            <div class="checkbox-container">
+                                <input type="checkbox" class="sum-checkbox" data-column="june" checked>
+                                <span>Июнь</span>
+                            </div>
+                        </th>
+                        <th class="editable-header" style="width: 14.28%" data-column="q3">
+                            <div class="checkbox-container">
+                                <input type="checkbox" class="sum-checkbox" data-column="q3" checked>
+                                <span>3кв</span>
+                            </div>
+                        </th>
+                        <th class="editable-header" style="width: 14.28%" data-column="q4">
+                            <div class="checkbox-container">
+                                <input type="checkbox" class="sum-checkbox" data-column="q4" checked>
+                                <span>4кв</span>
+                            </div>
+                        </th>
+                        <th style="width: 14.28%">Итого</th>
+                        <th style="width: 14.28%">Эффект по группе продуктов</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="product-row" data-group="Cloud">
+                        <th>Cloud (рекуррент) (ОД, млн.)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="Cloud">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="Ai-native">
+                        <th>Ai-native (ОД, млн.)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="Ai-native">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="API">
+                        <th>API Оборот, млн.</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="API">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="EFS">
+                        <th>ЕФС (шт.)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="EFS">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="Partnership">
+                        <th>Партнерка</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="Partnership">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="GenAI">
+                        <th>Gen Ai (клиент)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="GenAI">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="B2B">
+                        <th>B2B портал (клиент)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="B2B">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="product-row" data-group="SberPRO">
+                        <th>СберПРО (клиент)</th>
+                        <td class="cell" data-status="backlog"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="june"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q3"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="q4"><div class="cards-container"></div></td>
+                        <td class="cell" data-status="total"><div class="cards-container"></div></td>
+                        <td class="cell effect-cell" data-status="effect" data-group="SberPRO">
+                            <div class="effect-row">
+                                <span class="effect-label">полученный эффект:</span>
+                                <span class="effect-value green">0</span>
+                            </div>
+                            <div class="effect-row">
+                                <span class="effect-label">ожидаемый эффект:</span>
+                                <span class="effect-value blue">0</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>Доска управления задачами проекта | Данные сохраняются в localStorage | <span id="lastUpdate"></span></p>
+        </footer>
+        
+        <div class="notification" id="notification">
+            <i class="fas fa-check-circle"></i> Задача успешно добавлена!
+        </div>
+        
+        <!-- Скрытый элемент для импорта -->
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+        
+        <!-- Модальное окно для добавления задачи -->
+        <div class="modal" id="taskModal">
+            <div class="modal-content">
+                <button class="close-modal" id="closeModal">&times;</button>
+                <h2><i class="fas fa-plus-circle"></i> Добавить новую задачу</h2>
+                <form id="taskForm">
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label for="client"><i class="fas fa-building"></i> Клиент</label>
+                            <input type="text" id="client" placeholder="Название клиента">
+                            <div class="error-message">Обязательное поле</div>
+                        </div>
+                        
+                        <div class="form-group required">
+                            <label for="employee"><i class="fas fa-user"></i> Сотрудник</label>
+                            <select id="employee">
+                                <option value="">Выберите сотрудника</option>
+                                <!-- Сотрудники будут добавлены через JS -->
+                            </select>
+                            <div class="error-message">Выберите сотрудника</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="product"><i class="fas fa-box"></i> Продукт</label>
+                            <input type="text" id="product" placeholder="Название продукта">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productGroup"><i class="fas fa-layer-group"></i> Раздел</label>
+                            <select id="productGroup">
+                                <option value="Cloud">Cloud</option>
+                                <option value="Ai-native">Ai-native</option>
+                                <option value="API">API</option>
+                                <option value="EFS">ЕФС (шт.)</option>
+                                <option value="Partnership">Партнерка</option>
+                                <option value="GenAI">Gen Ai (клиент)</option>
+                                <option value="B2B">B2B портал (клиент)</option>
+                                <option value="SberPRO">СберПРО (клиент)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount"><i class="fas fa-money-bill-wave"></i> Сумма</label>
+                            <input type="text" id="amount" placeholder="Сумма" pattern="\d*">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="activityDate"><i class="fas fa-calendar"></i> Дата активности</label>
+                            <input type="date" id="activityDate">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="reset"><i class="fas fa-times"></i> Очистить</button>
+                        <button type="submit" id="addTaskBtn"><i class="fas fa-plus"></i> Добавить задачу</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальная переменная для отслеживания редактируемой задачи
+        let currentEditId = null;
+        
+        // Список сотрудников
+        const employees = [
+            "Ахметханова Д.М.",
+            "Белов А.С.",
+            "Брытков Ю.А.",
+            "Бутакова Т.А.",
+            "Варенцов А.А.",
+            "Ведерников Д.С.",
+            "Иванова А.Г.",
+            "Карпушев Е.В.",
+            "Лаптев М.А.",
+            "Мухин А.О.",
+            "Плотников М.А."
+        ];
+        
+        // Определяем группы, для которых нужно отображать только клиента и сотрудника
+        const minimalGroups = ['EFS', 'Partnership', 'GenAI', 'B2B', 'SberPRO'];
+        
+        // Заголовки столбцов по умолчанию
+        const defaultHeaders = {
+            backlog: "Бэклог",
+            june: "Июнь",
+            q3: "3кв",
+            q4: "4кв",
+            total: "Итого",
+            effect: "Эффект по группе продуктов"
+        };
+        
+        // Состояния чекбоксов
+        const defaultCheckboxStates = {
+            june: true,
+            q3: true,
+            q4: true
+        };
+        
+        // Пример данных для демонстрации
+        const sampleTasks = [
+            {
+                id: 1,
+                client: "ООО Ромашка",
+                employee: "Ахметханова Д.М.",
+                product: "Облачный сервис",
+                productGroup: "Cloud",
+                amount: "500000",
+                date: "2023-05-15",
+                status: "backlog",
+                color: "green"
+            },
+            {
+                id: 2,
+                client: "ЗАО Технологии",
+                employee: "Белов А.С.",
+                product: "AI-аналитика",
+                productGroup: "Ai-native",
+                amount: "1200000",
+                date: "2023-06-20",
+                status: "june",
+                color: "blue"
+            },
+            {
+                id: 3,
+                client: "АО Инновации",
+                employee: "Варенцов А.А.",
+                product: "API интеграция",
+                productGroup: "API",
+                amount: "750000",
+                date: "2023-07-10",
+                status: "q3",
+                color: "green"
+            },
+            {
+                id: 4,
+                client: "Банк Финанс",
+                employee: "Иванова А.Г.",
+                productGroup: "EFS",
+                amount: "1500",
+                date: "2023-08-15",
+                status: "backlog",
+                color: "blue"
+            },
+            {
+                id: 5,
+                client: "Торговая сеть",
+                employee: "Плотников М.А.",
+                productGroup: "Partnership",
+                amount: "2000",
+                status: "june",
+                color: "green"
+            }
+        ];
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            // Установка светлой темы по умолчанию
+            document.body.classList.remove('dark-theme');
+            document.getElementById('themeSwitch').innerHTML = '<i class="fas fa-moon"></i> Темная тема';
+            
+            // Заполняем список сотрудников в форме
+            const employeeSelect = document.getElementById('employee');
+            employees.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp;
+                option.textContent = emp;
+                employeeSelect.appendChild(option);
+            });
+            
+            // Создаем кнопки фильтров для сотрудников
+            const filtersContainer = document.getElementById('employeeFilters');
+            employees.forEach(emp => {
+                const btn = document.createElement('button');
+                btn.className = 'employee-btn';
+                btn.innerHTML = `<i class="fas fa-user"></i> ${emp}`;
+                btn.dataset.employee = emp;
+                filtersContainer.appendChild(btn);
+            });
+            
+            // Загружаем заголовки столбцов из localStorage или устанавливаем по умолчанию
+            loadColumnHeaders();
+            
+            // Загружаем состояния чекбоксов
+            loadCheckboxStates();
+            
+            // Инициализация данных
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || sampleTasks;
+            
+            // Инициализация доски
+            renderBoard(tasks);
+            
+            // Устанавливаем дату последнего обновления
+            document.getElementById('lastUpdate').textContent = `Последнее обновление: ${new Date().toLocaleString()}`;
+            
+            // Инициализация обработчиков событий
+            initEventListeners(tasks);
+        });
+
+        // Форматирование чисел с разделителями
+        function formatNumber(num) {
+            if (!num) return "0";
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+        
+        // Обратное преобразование отформатированного числа
+        function parseFormattedNumber(str) {
+            return parseInt(str.replace(/\s+/g, '')) || 0;
+        }
+
+        // Функция рендеринга доски
+        function renderBoard(tasks) {
+            // Очистка контейнеров для карточек
+            document.querySelectorAll('.cards-container').forEach(container => {
+                container.innerHTML = '';
+            });
+            
+            // Сортировка задач по названию клиента (без учета регистра)
+            tasks.sort((a, b) => {
+                const clientA = a.client.toLowerCase();
+                const clientB = b.client.toLowerCase();
+                return clientA.localeCompare(clientB);
+            });
+            
+            // Добавление карточек на доску
+            tasks.forEach(task => {
+                const container = document.querySelector(`tr[data-group="${task.productGroup}"] .cell[data-status="${task.status}"] .cards-container`);
+                if (container) {
+                    const card = createTaskCard(task);
+                    container.appendChild(card);
+                }
+            });
+            
+            // Обновление обработчиков событий для карточек
+            initCardEventListeners();
+            
+            // Расчет эффекта
+            calculateEffect();
+        }
+
+        // Создание карточки задачи
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.id = task.id;
+            card.dataset.employee = task.employee;
+            
+            // Применяем цвет карточки, если он задан
+            if (task.color && task.color !== 'default') {
+                card.classList.add(task.color);
+            }
+            
+            if (task.status === 'effect') {
+                card.classList.add('effect');
+            }
+            
+            // Добавляем кнопку удаления
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            card.appendChild(deleteBtn);
+            
+            // Добавляем кнопку редактирования
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            card.appendChild(editBtn);
+            
+            // Добавляем цветовые метки (вертикально справа)
+            const colorPicker = document.createElement('div');
+            colorPicker.className = 'color-picker';
+            colorPicker.innerHTML = `
+                <div class="color-option color-red" data-color="red"></div>
+                <div class="color-option color-green" data-color="green"></div>
+                <div class="color-option color-blue" data-color="blue"></div>
+                <div class="color-option color-default" data-color="default"></div>
+            `;
+            card.appendChild(colorPicker);
+            
+            // Добавляем обертку для контента
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'card-content';
+            card.appendChild(contentWrapper);
+            
+            // Для ЕФС - специальный формат карточки
+            if (task.productGroup === 'EFS') {
+                contentWrapper.innerHTML = `
+                    <div class="employee"><i class="fas fa-user"></i> ${task.employee}</div>
+                    <div class="amount-input-container">
+                        <input type="text" 
+                               class="amount-input" 
+                               value="${formatNumber(task.amount)}" 
+                               data-id="${task.id}"
+                               placeholder="Количество">
+                    </div>
+                `;
+            } 
+            // Для других групп
+            else {
+                contentWrapper.innerHTML = `
+                    <h3>${task.client}</h3>
+                    <p class="employee"><i class="fas fa-user"></i> ${task.employee}</p>
+                    ${!minimalGroups.includes(task.productGroup) ? `
+                        <p><i class="fas fa-box"></i> ${task.product || ''}</p>
+                        <div class="compact-row">
+                            <span><i class="fas fa-money-bill-wave"></i> ${formatNumber(task.amount) || ''}</span>
+                            <span><i class="fas fa-calendar"></i> ${task.date ? new Date(task.date).toLocaleDateString() : ''}</span>
+                        </div>
+                    ` : ''}
+                `;
+            }
+            
+            return card;
+        }
+
+        // Удаление задачи
+        function deleteTask(taskId) {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks = tasks.filter(task => task.id !== taskId);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            
+            // Если удаляем редактируемую задачу - сбрасываем флаг редактирования
+            if (currentEditId === taskId) {
+                currentEditId = null;
+            }
+            
+            // Перерисовываем доску и обновляем обработчики
+            renderBoard(tasks);
+            initDragAndDrop(tasks);
+            calculateEffect();
+            showNotification('Задача успешно удалена!');
+        }
+
+        // Загрузка заголовков столбцов
+        function loadColumnHeaders() {
+            const headers = JSON.parse(localStorage.getItem('columnHeaders')) || defaultHeaders;
+            
+            // Применяем заголовки
+            Object.keys(headers).forEach(column => {
+                const header = document.querySelector(`th.editable-header[data-column="${column}"]`);
+                if (header) {
+                    const span = header.querySelector('span');
+                    if (span) span.textContent = headers[column];
+                }
+            });
+            
+            // Обновляем заголовок эффекта
+            const effectHeader = document.querySelector('th:last-child');
+            if (effectHeader) {
+                effectHeader.textContent = headers.effect || "Эффект по группе продуктов";
+            }
+        }
+
+        // Сохранение заголовков столбцов
+        function saveColumnHeaders() {
+            const headers = {};
+            document.querySelectorAll('th.editable-header').forEach(header => {
+                const column = header.dataset.column;
+                const span = header.querySelector('span');
+                if (span) {
+                    headers[column] = span.textContent;
+                }
+            });
+            
+            // Сохраняем заголовок эффекта
+            const effectHeader = document.querySelector('th:last-child');
+            if (effectHeader) {
+                headers.effect = effectHeader.textContent;
+            }
+            
+            localStorage.setItem('columnHeaders', JSON.stringify(headers));
+        }
+        
+        // Загрузка состояний чекбоксов
+        function loadCheckboxStates() {
+            const states = JSON.parse(localStorage.getItem('checkboxStates')) || defaultCheckboxStates;
+            
+            Object.keys(states).forEach(column => {
+                const checkbox = document.querySelector(`.sum-checkbox[data-column="${column}"]`);
+                if (checkbox) {
+                    checkbox.checked = states[column];
+                }
+            });
+        }
+        
+        // Сохранение состояний чекбоксов
+        function saveCheckboxStates() {
+            const states = {};
+            document.querySelectorAll('.sum-checkbox').forEach(checkbox => {
+                states[checkbox.dataset.column] = checkbox.checked;
+            });
+            localStorage.setItem('checkboxStates', JSON.stringify(states));
+        }
+
+        // Инициализация обработчиков событий
+        function initEventListeners(tasks) {
+            // Открытие модального окна
+            document.getElementById('openModalBtn').addEventListener('click', () => {
+                // Сбрасываем флаг редактирования
+                currentEditId = null;
+                
+                // Восстанавливаем стандартный заголовок и кнопку
+                document.querySelector('#taskModal h2').innerHTML = '<i class="fas fa-plus-circle"></i> Добавить новую задачу';
+                document.getElementById('addTaskBtn').innerHTML = '<i class="fas fa-plus"></i> Добавить задачу';
+                
+                // Очищаем форму
+                document.getElementById('taskForm').reset();
+                
+                // Открываем модальное окно
+                document.getElementById('taskModal').style.display = 'flex';
+            });
+            
+            // Закрытие модального окна
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('taskModal').style.display = 'none';
+            });
+            
+            // Закрытие модального окна при клике вне его
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('taskModal')) {
+                    document.getElementById('taskModal').style.display = 'none';
+                }
+            });
+            
+            // Форма добавления задачи
+            document.getElementById('taskForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (addNewTask(tasks)) {
+                    document.getElementById('taskModal').style.display = 'none';
+                }
+            });
+            
+            // Фильтрация по сотрудникам (кнопки)
+            document.querySelectorAll('.employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Сброс активной кнопки
+                    document.querySelectorAll('.employee-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // Активация текущей кнопки
+                    this.classList.add('active');
+                    
+                    const employee = this.dataset.employee;
+                    filterByEmployee(employee);
+                    calculateEffect();
+                });
+            });
+            
+            // Сброс фильтра
+            document.getElementById('resetFilter').addEventListener('click', function() {
+                document.querySelectorAll('.employee-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                clearEmployeeFilter();
+                calculateEffect();
+            });
+            
+            // Переключение темы
+            document.getElementById('themeSwitch').addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                this.innerHTML = isDark ? 
+                    '<i class="fas fa-sun"></i> Светлая тема' : 
+                    '<i class="fas fa-moon"></i> Темная тема';
+            });
+            
+            // Редактирование заголовков столбцов
+            document.querySelectorAll('th.editable-header span').forEach(span => {
+                span.addEventListener('dblclick', function() {
+                    const currentText = this.textContent;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = currentText;
+                    input.className = 'header-edit';
+                    
+                    this.parentNode.replaceChild(input, this);
+                    input.focus();
+                    
+                    input.addEventListener('blur', () => {
+                        const newSpan = document.createElement('span');
+                        newSpan.textContent = input.value;
+                        input.parentNode.replaceChild(newSpan, input);
+                        saveColumnHeaders();
+                    });
+                    
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            input.blur();
+                        }
+                    });
+                });
+            });
+            
+            // Обработка ввода для ЕФС
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('amount-input')) {
+                    const taskId = parseInt(e.target.dataset.id);
+                    const value = e.target.value.replace(/[^\d]/g, '');
+                    const formattedValue = formatNumber(value);
+                    
+                    if (e.target.value !== formattedValue) {
+                        e.target.value = formattedValue;
+                    }
+                    
+                    // Обновляем значение в хранилище
+                    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                    const taskIndex = tasks.findIndex(t => t.id === taskId);
+                    if (taskIndex !== -1) {
+                        tasks[taskIndex].amount = value;
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                    }
+                    
+                    calculateEffect();
+                }
+            });
+            
+            // Ограничение ввода только цифр для поля суммы в форме
+            document.getElementById('amount').addEventListener('input', function() {
+                this.value = this.value.replace(/[^\d]/g, '');
+            });
+            
+            // Drag and drop
+            initDragAndDrop(tasks);
+            
+            // Инициализация обработчиков для карточек
+            initCardEventListeners();
+            
+            // Экспорт данных
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            
+            // Импорт данных
+            document.getElementById('importBtn').addEventListener('click', () => {
+                document.getElementById('importFile').click();
+            });
+            
+            // Обработка выбора файла для импорта
+            document.getElementById('importFile').addEventListener('change', handleFileImport);
+            
+            // Обработчики для чекбоксов
+            document.querySelectorAll('.sum-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    saveCheckboxStates();
+                    calculateEffect();
+                });
+            });
+        }
+        
+        // Инициализация обработчиков событий для карточек
+        function initCardEventListeners() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.card');
+                    if (card) {
+                        const taskId = parseInt(card.dataset.id);
+                        deleteTask(taskId);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.card');
+                    if (card) {
+                        const taskId = parseInt(card.dataset.id);
+                        openEditModal(taskId);
+                    }
+                });
+            });
+            
+            // Обработчики для цветных меток
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const card = this.closest('.card');
+                    if (card) {
+                        const taskId = parseInt(card.dataset.id);
+                        const color = this.dataset.color;
+                        changeCardColor(taskId, color, card);
+                    }
+                });
+            });
+            
+            // Двойной клик на карточке для редактирования
+            document.querySelectorAll('.card-content').forEach(content => {
+                content.addEventListener('dblclick', function(e) {
+                    // Игнорируем клики по элементам управления
+                    if (e.target.classList.contains('delete-btn') || 
+                        e.target.classList.contains('edit-btn') ||
+                        e.target.classList.contains('color-option') ||
+                        e.target.classList.contains('amount-input')) {
+                        return;
+                    }
+                    
+                    const card = this.closest('.card');
+                    if (card) {
+                        const taskId = parseInt(card.dataset.id);
+                        openEditModal(taskId);
+                    }
+                });
+            });
+        }
+        
+        // Изменение цвета карточки
+        function changeCardColor(taskId, color, cardElement) {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            
+            if (taskIndex !== -1) {
+                // Удаляем предыдущие классы цветов
+                cardElement.classList.remove('red', 'green', 'blue');
+                
+                if (color === 'default') {
+                    tasks[taskIndex].color = null;
+                } else {
+                    tasks[taskIndex].color = color;
+                    cardElement.classList.add(color);
+                }
+                
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                showNotification('Цвет карточки обновлен!');
+                calculateEffect();
+            }
+        }
+
+        // Drag and drop
+        function initDragAndDrop(tasks) {
+            let draggedCard = null;
+            let draggedCardColor = null;
+            
+            // События для карточек
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    draggedCard = card;
+                    draggedCardColor = card.className.match(/(red|green|blue)/)?.[0] || null;
+                    
+                    e.dataTransfer.setData('text/plain', card.dataset.id);
+                    setTimeout(() => card.classList.add('dragging'), 0);
+                });
+                
+                card.addEventListener('dragend', () => {
+                    if (draggedCard) {
+                        draggedCard.classList.remove('dragging');
+                    }
+                    draggedCard = null;
+                    draggedCardColor = null;
+                });
+            });
+            
+            // События для ячеек
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    cell.classList.add('highlight');
+                });
+                
+                cell.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    cell.classList.add('drag-over');
+                });
+                
+                cell.addEventListener('dragleave', () => {
+                    cell.classList.remove('highlight');
+                    cell.classList.remove('drag-over');
+                });
+                
+                cell.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    cell.classList.remove('highlight');
+                    cell.classList.remove('drag-over');
+                    
+                    if (draggedCard) {
+                        const taskId = parseInt(draggedCard.dataset.id);
+                        const newStatus = cell.dataset.status;
+                        const currentRow = draggedCard.closest('tr');
+                        const targetRow = cell.closest('tr');
+                        
+                        // Проверка, что перетаскивание происходит в той же строке
+                        if (currentRow === targetRow) {
+                            const taskIndex = tasks.findIndex(t => t.id === taskId);
+                            if (taskIndex !== -1) {
+                                // Обновляем статус и сохраняем цвет
+                                tasks[taskIndex].status = newStatus;
+                                
+                                // Сохраняем цвет, если он был
+                                if (draggedCardColor) {
+                                    tasks[taskIndex].color = draggedCardColor;
+                                }
+                                
+                                localStorage.setItem('tasks', JSON.stringify(tasks));
+                                renderBoard(tasks);
+                                initDragAndDrop(tasks);
+                                calculateEffect();
+                                showNotification('Задача перемещена!');
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Добавление/редактирование задачи
+        function addNewTask(tasks) {
+            if (!validateForm()) {
+                showNotification('Пожалуйста, заполните обязательные поля');
+                return false;
+            }
+            
+            // Редактирование существующей задачи
+            if (currentEditId !== null) {
+                const taskIndex = tasks.findIndex(t => t.id === currentEditId);
+                if (taskIndex !== -1) {
+                    tasks[taskIndex] = {
+                        ...tasks[taskIndex],
+                        client: document.getElementById('client').value.trim(),
+                        employee: document.getElementById('employee').value,
+                        product: document.getElementById('product').value.trim(),
+                        productGroup: document.getElementById('productGroup').value,
+                        amount: document.getElementById('amount').value,
+                        date: document.getElementById('activityDate').value
+                    };
+                    
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                    renderBoard(tasks);
+                    initDragAndDrop(tasks);
+                    calculateEffect();
+                    showNotification('Задача успешно обновлена!');
+                    
+                    // Сбрасываем флаг редактирования
+                    currentEditId = null;
+                    return true;
+                }
+            }
+            
+            // Добавление новой задачи
+            const newTask = {
+                id: Date.now(),
+                client: document.getElementById('client').value.trim(),
+                employee: document.getElementById('employee').value,
+                product: document.getElementById('product').value.trim(),
+                productGroup: document.getElementById('productGroup').value,
+                amount: document.getElementById('amount').value,
+                date: document.getElementById('activityDate').value,
+                status: 'backlog',
+                color: null
+            };
+            
+            tasks.push(newTask);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderBoard(tasks);
+            initDragAndDrop(tasks);
+            calculateEffect();
+            
+            // Очистка формы
+            document.getElementById('taskForm').reset();
+            showNotification('Задача успешно добавлена!');
+            return true;
+        }
+
+        // Валидация формы
+        function validateForm() {
+            let isValid = true;
+            
+            const clientInput = document.getElementById('client');
+            const employeeSelect = document.getElementById('employee');
+            
+            // Валидация клиента
+            if (!clientInput.value.trim()) {
+                clientInput.classList.add('error');
+                clientInput.nextElementSibling.style.display = 'block';
+                isValid = false;
+            } else {
+                clientInput.classList.remove('error');
+                clientInput.nextElementSibling.style.display = 'none';
+            }
+            
+            // Валидация сотрудника
+            if (!employeeSelect.value) {
+                employeeSelect.classList.add('error');
+                employeeSelect.nextElementSibling.style.display = 'block';
+                isValid = false;
+            } else {
+                employeeSelect.classList.remove('error');
+                employeeSelect.nextElementSibling.style.display = 'none';
+            }
+            
+            return isValid;
+        }
+
+        // Функция открытия модального окна для редактирования
+        function openEditModal(taskId) {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const task = tasks.find(t => t.id === taskId);
+            
+            if (task) {
+                // Заполняем форму данными задачи
+                document.getElementById('client').value = task.client || '';
+                document.getElementById('employee').value = task.employee || '';
+                document.getElementById('product').value = task.product || '';
+                document.getElementById('productGroup').value = task.productGroup || 'Cloud';
+                document.getElementById('amount').value = task.amount || '';
+                document.getElementById('activityDate').value = task.date || '';
+                
+                // Устанавливаем флаг редактирования
+                currentEditId = taskId;
+                
+                // Меняем заголовок и текст кнопки
+                document.querySelector('#taskModal h2').innerHTML = '<i class="fas fa-edit"></i> Редактировать задачу';
+                document.getElementById('addTaskBtn').innerHTML = '<i class="fas fa-save"></i> Сохранить изменения';
+                
+                // Открываем модальное окно
+                document.getElementById('taskModal').style.display = 'flex';
+                
+                // Фокусируемся на первом поле
+                document.getElementById('client').focus();
+            }
+        }
+
+        // Фильтрация по сотруднику
+        function filterByEmployee(employee) {
+            document.querySelectorAll('.card').forEach(card => {
+                if (card.dataset.employee === employee) {
+                    card.classList.remove('hidden-card');
+                } else {
+                    card.classList.add('hidden-card');
+                }
+            });
+        }
+
+        // Сброс фильтра по сотруднику
+        function clearEmployeeFilter() {
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('hidden-card');
+            });
+        }
+
+        // Показать уведомление
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Экспорт данных в файл JSON
+        function exportData() {
+            const data = {
+                tasks: JSON.parse(localStorage.getItem('tasks')) || [],
+                columnHeaders: JSON.parse(localStorage.getItem('columnHeaders')) || defaultHeaders,
+                checkboxStates: JSON.parse(localStorage.getItem('checkboxStates')) || defaultCheckboxStates
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `tasks-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            document.body.appendChild(linkElement);
+            
+            linkElement.click();
+            document.body.removeChild(linkElement);
+            
+            showNotification('Данные успешно экспортированы!');
+        }
+        
+        // Обработка импорта данных из файла
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Проверка структуры данных
+                    if (!data.tasks || !Array.isArray(data.tasks)) {
+                        throw new Error('Некорректный формат файла');
+                    }
+                    
+                    // Сохраняем задачи
+                    localStorage.setItem('tasks', JSON.stringify(data.tasks));
+                    
+                    // Сохраняем заголовки столбцов, если они есть
+                    if (data.columnHeaders) {
+                        localStorage.setItem('columnHeaders', JSON.stringify(data.columnHeaders));
+                    }
+                    
+                    // Сохраняем состояния чекбоксов
+                    if (data.checkboxStates) {
+                        localStorage.setItem('checkboxStates', JSON.stringify(data.checkboxStates));
+                    }
+                    
+                    // Перерисовываем доску
+                    renderBoard(data.tasks);
+                    loadColumnHeaders();
+                    loadCheckboxStates();
+                    
+                    showNotification('Данные успешно импортированы!');
+                } catch (error) {
+                    showNotification('Ошибка импорта: ' + error.message);
+                    console.error('Ошибка импорта данных:', error);
+                }
+                
+                // Сбрасываем значение input, чтобы можно было загрузить тот же файл снова
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Расчет эффекта для последнего столбца
+        function calculateEffect() {
+            // Получаем текущие задачи
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            
+            // Получаем выбранного сотрудника (если есть)
+            const activeEmployeeBtn = document.querySelector('.employee-btn.active');
+            const employee = activeEmployeeBtn ? activeEmployeeBtn.dataset.employee : null;
+            
+            // Получаем состояния чекбоксов
+            const checkedColumns = {};
+            document.querySelectorAll('.sum-checkbox').forEach(checkbox => {
+                checkedColumns[checkbox.dataset.column] = checkbox.checked;
+            });
+            
+            // Собираем суммы для каждого продукта и каждого типа эффекта
+            const sumsByGroup = {};
+            
+            // Инициализация структуры данных
+            document.querySelectorAll('.product-row').forEach(row => {
+                const group = row.dataset.group;
+                sumsByGroup[group] = {
+                    green: 0,
+                    blue: 0
+                };
+            });
+            
+            tasks.forEach(task => {
+                // Если сотрудник выбран и задача не от этого сотрудника, пропускаем
+                if (employee && task.employee !== employee) {
+                    return;
+                }
+                
+                // Если столбец, в котором находится задача, отмечен для суммирования
+                if (checkedColumns[task.status]) {
+                    const amount = parseFloat(task.amount) || 0;
+                    const group = task.productGroup;
+                    
+                    // Учитываем только зеленые и синие карточки
+                    if (task.color === 'green') {
+                        sumsByGroup[group].green += amount;
+                    } else if (task.color === 'blue') {
+                        sumsByGroup[group].blue += amount;
+                    }
+                }
+            });
+            
+            // Обновляем ячейки эффекта для каждого продукта
+            Object.keys(sumsByGroup).forEach(group => {
+                const effectCell = document.querySelector(`.effect-cell[data-group="${group}"]`);
+                if (effectCell) {
+                    const greenValue = effectCell.querySelector('.effect-value.green');
+                    const blueValue = effectCell.querySelector('.effect-value.blue');
+                    
+                    if (greenValue) {
+                        greenValue.textContent = formatNumber(sumsByGroup[group].green);
+                    }
+                    if (blueValue) {
+                        blueValue.textContent = formatNumber(sumsByGroup[group].blue);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
